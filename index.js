@@ -12,8 +12,12 @@ const app = document.getElementById("base");
 
 
 var currentMonth = document.getElementById("current-month");
-const backButton = document.getElementById("back");
-const forwardButton = document.getElementById("forward");
+const backMonthButton = document.getElementById("back-month");
+const forwardMonthButton = document.getElementById("forward-month");
+
+var currentYear = document.getElementById("current-year");
+const backYearButton = document.getElementById("back-year");
+const forwardYearButton = document.getElementById("forward-year");
 
 /**************************************************************************************************************************/
 /******************************************** Initialize Calendar *********************************************************/
@@ -22,11 +26,6 @@ window.onload = makeCalendarInteractive();
 
 function fillPage(year = new Date().getFullYear(), month = new Date().getMonth(), day = new Date().getDate())
 {
-	//alert("fillPage Date: " + year + month + day);
-	//alert("year: " + year);
-	//alert("month: " + month);
-	//alert("day: " + day);
-
 	createCalendar(year, month, day);
 	sendRequest(year, month, day);
 }
@@ -36,7 +35,7 @@ function fillPage(year = new Date().getFullYear(), month = new Date().getMonth()
 function makeCalendarInteractive()
 {
 	// Dates
-	for (var i = 2; i < table.rows.length; i++) 
+	for (var i = 3; i < table.rows.length; i++) 
 	{	
 		for (var j = 0; j < table.rows[i].cells.length; j++)
 		{
@@ -47,43 +46,101 @@ function makeCalendarInteractive()
 		}
 	}
 	// Month
-	backButton.onclick = function()
+	backMonthButton.onclick = function()
 	{
 		changeMonth("prev");
 	};
 
-	forwardButton.onclick = function()
+	forwardMonthButton.onclick = function()
 	{
 		changeMonth("next");	
 	};
+	// Year
+	backYearButton.onclick = function()
+	{
+		changeYear("prev");
+	};
+
+	forwardYearButton.onclick = function()
+	{
+		changeYear("next");	
+	};
+}
+
+function changeYear(chosenYear) 
+{
+	var newYear;
+	var curMonth = months.indexOf(currentMonth.textContent);
+
+	if(chosenYear == "next")
+	{    
+		newYear = parseInt(currentYear.textContent) + 1;
+		resetHighlights();
+		resetDates();
+		resetGames();
+		fillPage(newYear, curMonth, 1);
+	}
+	else if(chosenYear == "prev")
+	{
+		newYear = parseInt(currentYear.textContent) - 1;
+		resetHighlights();
+		resetDates();
+		resetGames();
+		fillPage(newYear, curMonth, 1);
+	}
+	else
+	{
+		alert("Error");
+	}
 }
 
 function changeMonth(chosenMonth) 
 {
 	var newMonth;
+	var curYear = currentYear.textContent;
+	var nextYear = parseInt(curYear) + 1;
+	var prevYear = parseInt(curYear) - 1;
+	
+
 	if(chosenMonth == "next")
-	{    
-		newMonth = months.indexOf(currentMonth.textContent) + 1;
-		//alert("Going forward");
-		//alert("Current Month: " + months.indexOf(currentMonth.textContent));
-		//alert("New Month: " + newMonth);
-		resetHighlights();
-		resetDates();
-		resetGames();
-		fillPage(new Date().getFullYear(), newMonth, 1);
-		//alert("Month name: " + months[newMonth]);
+	{
+		// Going from December to January
+		if(months.indexOf(currentMonth.textContent) == 11)
+		{
+			newMonth = 0;
+			resetHighlights();
+			resetDates();
+			resetGames();
+			fillPage(nextYear, newMonth, 1);
+		}
+		else
+		{
+			newMonth = months.indexOf(currentMonth.textContent) + 1;
+			resetHighlights();
+			resetDates();
+			resetGames();
+			fillPage(curYear, newMonth, 1);
+		}
 	}
 	else if(chosenMonth == "prev")
 	{
-		newMonth = months.indexOf(currentMonth.textContent) - 1;
-		//alert("Going back");
-		//alert("Current Month: " + months.indexOf(currentMonth.textContent));
-		//alert("New Month: " + newMonth);
-		resetHighlights();
-		resetDates();
-		resetGames();
-		fillPage(new Date().getFullYear(), newMonth, 1);
-		//alert("Month name: " + months[newMonth]);
+		// Going from January to December
+		if(months.indexOf(currentMonth.textContent) == 0)
+		{
+			newMonth = 11;
+			resetHighlights();
+			resetDates();
+			resetGames();
+			fillPage(prevYear, newMonth, 1);
+		}
+		else
+		{
+			newMonth = months.indexOf(currentMonth.textContent) - 1;
+			resetHighlights();
+			resetDates();
+			resetGames();
+			fillPage(curYear, newMonth, 1);
+		}
 	}
 	else
 	{
@@ -94,14 +151,14 @@ function changeMonth(chosenMonth)
 function changeDate(chosenDate) 
 {
 	var curMonth = months.indexOf(currentMonth.textContent);
+	var curYear = currentYear.textContent;
 	var newDate = chosenDate.innerHTML;
 	if(newDate != "")
 	{    
-		//alert(newDate);
 		resetHighlights();
 		resetDates();
 		resetGames();
-		fillPage(new Date().getFullYear(), curMonth, newDate);
+		fillPage(curYear, curMonth, newDate);
 	}
 	else
 	{
@@ -115,6 +172,7 @@ function createCalendar(year, month, day)
 {
 	//alert("createCalendar Date: " + year + month + day);
 	currentMonth.textContent = months[month];
+	currentYear.textContent = year;
 	
 	
 	var dayMonthStartsOn = new Date(year,month,1).getDay();
@@ -123,34 +181,34 @@ function createCalendar(year, month, day)
 
 	var maxRows;
 	
-	// No baseball in February, don't have to worry about that.
+	// Won't be a leap year for a while
 	if((lastDayOfMonth > 30) && ((lastDayOfMonth - dayMonthStartsOn) < 28))
 	{
-		maxRows = 8;
+		maxRows = 9;
 	}
 	else if((lastDayOfMonth == 30) && ((lastDayOfMonth - dayMonthStartsOn) < 27))
 	{
-		maxRows = 8;
+		maxRows = 9;
 	}
 	else
 	{
-		maxRows = 7;
+		maxRows = 8;
 	}
 
 
-	// This will be the first row actual days
+	// This will be the first row with actual days
 	for(var j = dayMonthStartsOn; j < 7; j++)
 	{
-		table.rows[2].cells[j].textContent = dayCounter;
+		table.rows[3].cells[j].textContent = dayCounter;
 		if(dayCounter == day)
 		{
-			table.rows[2].cells[j].style.backgroundColor = "LightSkyBlue";
+			table.rows[3].cells[j].style.backgroundColor = "LightSkyBlue";
 		}
 		dayCounter++;
 	}
 
 	// Just fill the next few rows in
-	for(var rowNum = 3; rowNum < (maxRows - 1); rowNum++)
+	for(var rowNum = 4; rowNum < (maxRows - 1); rowNum++)
 	{
 		for(var colNum = 0; colNum < 7; colNum++)
 		{
@@ -182,7 +240,7 @@ function createCalendar(year, month, day)
 /*************************************** Helper functions for clean UI ****************************************************/
 function resetHighlights()
 {
-	for (var i = 2; i < table.rows.length; i++) 
+	for (var i = 3; i < table.rows.length; i++) 
 	{	
 		for (var j = 0; j < table.rows[i].cells.length; j++)
 		{
@@ -193,7 +251,7 @@ function resetHighlights()
 
 function resetDates()
 {
-	for (var i = 2; i < table.rows.length; i++) 
+	for (var i = 3; i < table.rows.length; i++) 
 	{	
 		for (var j = 0; j < table.rows[i].cells.length; j++)
 		{
@@ -206,7 +264,6 @@ function resetDates()
 function resetGames()
 {
 	var container = document.getElementById("container-id");
-	//app.removeChild(container);
 	container.remove();
 }
 
@@ -214,14 +271,10 @@ function resetGames()
 /******************************************** API Request Handling ********************************************************/
 function sendRequest(year, month, day) 
 {
-	//alert("sendRequest Date: " + year + month + day);
-	//var baseURL = "https://www.balldontlie.io/api/v1/games?page=1&start_date="; // This doesn't work for some reason. Returns too many games. Need to use array
 	var baseURL = "https://www.balldontlie.io/api/v1/games?dates[]="
 	var dateURL = year + "-" + (month + 1) + "-" + day; // Need to add 1 to month, since JS months go from 0-11
-	//var requestURL = baseURL + dateURL + "&endDate=" + dateURL; // This doesn't work for some reason. Returns too many games. Need to use array
 	var requestURL = baseURL + dateURL;
 
-	//alert("Request:     " + requestURL);
 	var request = new XMLHttpRequest();
 	request.onload = processGames;
 	request.open('GET', requestURL, true);
@@ -238,12 +291,8 @@ function processGames()
 	// Begin accessing JSON data here
 	var data = JSON.parse(this.response);
 	
-	//alert(data);
 
 	var games = data.data;
-	//var meta = data.meta.total_pages;
-	//alert(games);
-	//alert(meta);
 	if (this.status >= 200 && this.status < 400) 
 	{
 		games.forEach(game => 
@@ -258,9 +307,6 @@ function processGames()
 
 			const p = document.createElement('p');
 			utcDate = game.status;
-			//var localDate = new Date(utcDate);
-			//var twelveHourDateFormat = localDate.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
-			//p.textContent =  twelveHourDateFormat;
 			p.textContent = utcDate;
 
 			container.appendChild(card);
